@@ -70,7 +70,7 @@ class DataLoggingWidget():
             self.root.after(self.delay*1000, self._flip_interlock) # Kludgy, sorry
             self.open_file.close()
 
-            # Notifies observers when logging is stopped - enables Baserow widget to respond to data logging
+            # Notifies observers when logging is stopped 
             # Need to have the filename as the last 'word' in the event argument
             self.parent.notify('Stopped logging to file ' + self.filename, modifier = self)
         else:

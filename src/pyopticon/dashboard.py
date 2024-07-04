@@ -158,7 +158,7 @@ class PyOpticonDashboard:
         """
         self.all_interlocks.append(fn)
 
-    def notify(self, event, modifier =None):
+    def notify(self, event, notifier =None):
         """ Updates observers when there is an event logged. If an observer created the event, they are not updated.
 
         :param modifier: the observer that created an event
@@ -166,7 +166,7 @@ class PyOpticonDashboard:
         """
         print(event)
         for observer in self._observers:
-            if modifier != observer:
+            if notifier != observer:
                 print("Notified: " + str(observer))
                 observer.update(event)
 
@@ -179,7 +179,7 @@ class PyOpticonDashboard:
         if observer not in self._observers:
             self._observers.append(observer)
 
-    def detach_observer(self, observer):
+    def remove_observer(self, observer):
         """Remove the observer from the observer list.
 
         :param observer: an observer that no longer needs to get updates from publisher

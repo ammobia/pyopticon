@@ -6,6 +6,8 @@ import time
 import traceback
 from .. import minimal_widget
 
+PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "New Automation File"
+
 # Widget for automated programs (this one is a little bit complicated!)
 class AutomationWidget(minimal_widget.MinimalWidget):
     """ This widget contains buttons to show/hide the console (on PC's), show/hide all the other widgets' serial controls, 
@@ -388,13 +390,12 @@ class AutomationWidget(minimal_widget.MinimalWidget):
 
 
     def update(self, event):
-        """When a notification is sent by the publisher (dashboard) the event is checked. If the event has 'New automation file' 
-        in it the existence of an automation file in the Recipe database will be checked, and if it does exist it will be uploaded.
-        
+        """This function runs when a notification is sent by the publisher (dashboard) and checks the event.  
+
         :param event: The event that just occurred
         :type event: String
         """
-        if 'New automation file' in event:
+        if PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE in event:
             file = event.split(' ')[-1]
             self.load_file(file)
     # Helper functions to enable/disable buttons
