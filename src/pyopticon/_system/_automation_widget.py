@@ -4,9 +4,12 @@ from tkinter import filedialog as fd
 from datetime import timedelta
 import time
 import traceback
+from .. import minimal_widget
+
+PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "New Automation File"
 
 # Widget for automated programs (this one is a little bit complicated!)
-class AutomationWidget:
+class AutomationWidget(minimal_widget.MinimalWidget):
     """ This widget contains buttons to show/hide the console (on PC's), show/hide all the other widgets' serial controls, 
     print automation help to the console, and open help/tutorials.
 
@@ -16,6 +19,11 @@ class AutomationWidget:
 
     def __init__(self, parent_dashboard):
         """"Constructor for a AutomationWidget"""
+        super().__init__(parent_dashboard=parent_dashboard)
+
+        self.name = "Automation Widget"
+        self.nickname = "Automation Widget"
+
         self.parent = parent_dashboard
         self.root = parent_dashboard.get_tkinter_object()
         self.main_color = '#FF7F7F'
@@ -27,6 +35,7 @@ class AutomationWidget:
         self.file_loaded = StringVar()
         self.file_loaded.set("No file loaded.")
         Label(self.frame,textvariable=self.file_loaded).grid(row=2,column=1,sticky='nesw')
+
         self.lines_loaded = StringVar()
         Label(self.frame,textvariable=self.lines_loaded).grid(row=3,column=1,sticky='nesw')
         Label(self.frame,text="Next action in: ").grid(row=4,column=1,sticky='nesw')
@@ -37,7 +46,7 @@ class AutomationWidget:
         self.time_to_go_readout = StringVar()
         self.time_to_go_readout.set("0:00:00")
         Label(self.frame,textvariable=self.time_to_go_readout).grid(row=5,column=2,sticky='nesw')
-        self.script_load_button = Button(self.frame,text="    Load    ",command=self._load_automation_file)
+        self.script_load_button = Button(self.frame,text="    Load    ",command=self._file_from_dialog)
         self.script_load_button.grid(row=2,column=2,sticky='nesw')
         self.start_button_text = StringVar()
         self.script_start_button = Button(self.frame,textvariable=self.start_button_text,command=self._start_automated_tasks)
@@ -48,6 +57,10 @@ class AutomationWidget:
         self.script_stop_button.grid(row=3,column=3,sticky='nesw')
         Label(self.frame,text="        ").grid(row=5,column=3,sticky='nesw')
         self.skip_button = Button(self.frame, text='Skip', command=self._skip_await)
+
+        self.toggle_var = BooleanVar()
+        self.toggle = Checkbutton(self.frame, text="Enable Step Logging", variable=self.toggle_var, command=self._on_log_toggle)
+        self.toggle.grid(row=6,column=2,sticky='nesw')
 
         # Define some automation variables
         self.delay_for_loading = 0 # Keep track of accumulated delay when using schedule_delay function
@@ -66,6 +79,11 @@ class AutomationWidget:
         self.latest_await_index = -1
         self.skip_await_flag=False
 
+        self.log_automation_steps=False
+
+    def _on_log_toggle(self):
+        self.log_automation_steps = self.toggle_var.get()
+
     def get_frame(self):
         """Get the tkinter frame on which this object is drawn.
         
@@ -80,6 +98,18 @@ class AutomationWidget:
         :return: The Dashboard to which this widget was added
         :rtype: pyopticon.dashboard.Dashboard"""
         return self.parent
+    
+    def log_data(self):
+        """The automation widget will optionally log whatever step of the automation it's currently on, in order to make 
+        splitting up time series data easier in post-experiment analysis.
+        
+        :return: A dict of the widget's loggable fields and their current values
+        :rtype: dict"""
+        out = dict()
+        
+        if self.log_automation_steps:
+            out["Step"] = str(self.automation_index)
+        return out
 
     def schedule_delay(self, delay):
         """This function is meant to be called in automation scripts. It causes a delay before a subsequent call to schedule_function 
@@ -297,12 +327,18 @@ class AutomationWidget:
         self.await_condition_displayed = False
         self.await_error_displayed = False
         self.skip_await_flag=False
+        self.toggle.config(state=DISABLED)
         # Actually start
         self._buttons_running_mode()
         self.pause_tasks = False
         self._update_tasks()
 
-    def _load_automation_file(self): # Open a dialog and load a file for automation
+    def _file_from_dialog(self): # Open a dialog and load a file for automation
+        
+        filename = fd.askopenfilename()
+        self.load_file(filename)
+
+    def load_file(self, filename):
         """Load an automation script from a file. Generates a list of functions and a list of the delays before each one will be 
         executed after starting the script. Sets GUI elements like '0/n steps done' and 'xx:xx:xx remaining'.\n
         
@@ -310,6 +346,7 @@ class AutomationWidget:
         automation scripts whose authors you trues. exec() is called in a namespace with schedule_delay, schedule_action, schedule_function, and schedule_await_condition 
         already defined as local variables for you to use.
         """
+
         # Reset everything
         self.delay_for_loading = 0
         self.delay_list = []
@@ -326,7 +363,7 @@ class AutomationWidget:
         self.lines_loaded.set("")
         self.latest_await_index = -1
         # Hopefully these all get overwritten; above is just to cover our bases if there's an error.
-        filename = fd.askopenfilename()
+
         f = str.split(filename,'/')
         f = f[len(f)-1] # We just want the file name to display, not its whole path
         script = open(filename).read()
@@ -351,6 +388,16 @@ class AutomationWidget:
             self.time_to_go_readout.set(str(timedelta(seconds=self.time_to_go)))
         print("Loaded "+filename)
 
+
+    def update(self, event):
+        """This function runs when a notification is sent by the publisher (dashboard) and checks the event.  
+
+        :param event: The event that just occurred
+        :type event: String
+        """
+        if PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE in event:
+            file = event.split(' ')[-1]
+            self.load_file(file)
     # Helper functions to enable/disable buttons
 
     def _pause_automated_tasks(self):
@@ -370,6 +417,7 @@ class AutomationWidget:
         self.step_countdown_readout.set(str(timedelta(seconds=self.seconds_to_next_task)))
         self.time_to_go_readout.set(str(timedelta(seconds=self.time_to_go)))
         self.lines_loaded.set("0/"+str(len(self.delay_list))+" steps done.")
+        self.toggle.config(state=NORMAL)
         self.awaiting = False
 
     def _buttons_running_mode(self):
@@ -379,6 +427,7 @@ class AutomationWidget:
         self.script_pause_button.configure(state='normal')
         self.script_stop_button.configure(state='normal')
         self.start_button_text.set("Start")
+        self.toggle.config(state=DISABLED)
         self.automation_running_label.set("(running)")
         self.skip_button.grid(row=4,column=3,sticky='nesw')
         self.frame.configure(highlightbackground='green')
@@ -389,6 +438,7 @@ class AutomationWidget:
         self.script_start_button.configure(state='normal')
         self.script_pause_button.configure(state='disabled')
         self.script_stop_button.configure(state='normal')
+        self.toggle.config(state=NORMAL)
         self.automation_running_label.set("(paused)")
         self.start_button_text.set("Resume")
         self.skip_button.grid_remove()
@@ -400,6 +450,7 @@ class AutomationWidget:
         self.script_start_button.configure(state='normal')
         self.script_pause_button.configure(state='disabled')
         self.script_stop_button.configure(state='disabled')
+        self.toggle.config(state=NORMAL)
         self.automation_running_label.set("(stopped)")
         self.start_button_text.set("Start")
         self.skip_button.grid_remove()

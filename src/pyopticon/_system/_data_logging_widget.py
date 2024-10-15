@@ -5,7 +5,7 @@ import datetime
 import os
 
 # data logging widget
-class DataLoggingWidget:
+class DataLoggingWidget():
     """ This widget allows a user to choose a data logging location and to start and stop data logging
 
     :param parent: The dashboard to which this widget will be added.
@@ -69,6 +69,10 @@ class DataLoggingWidget:
             self.logging_interlock = True # This prevents one particular bug with slow polling rates
             self.root.after(self.delay*1000, self._flip_interlock) # Kludgy, sorry
             self.open_file.close()
+
+            # Notifies observers when logging is stopped 
+            # Need to have the filename as the last 'word' in the event argument
+            self.parent.notify('Stopped logging to file ' + self.filename, modifier = self)
         else:
             # Check that the time interval and filename are valid
             if self.destination.get()=="None selected.":
@@ -118,7 +122,7 @@ class DataLoggingWidget:
         if self.empty_file or self.widgets_in_order is None:
             self.widgets_in_order = []
             self.widget_attributes_in_order = dict()
-            new_header = "Date, Timestamp"
+            new_header = "Date,Timestamp"
             for widget in self.parent.all_widgets:
                 if not hasattr(widget,'log_data'):
                     continue
@@ -161,3 +165,7 @@ class DataLoggingWidget:
             self.empty_file = False
         else:
             self.empty_file = True
+
+    def update(self, event):
+        """Has an update function because this is listed as an observer of the dashboard."""
+        pass
