@@ -2,6 +2,7 @@ from tkinter import *
 import serial.tools.list_ports
 import platform
 import traceback
+import time
 
 # Serial widget
 class SerialWidget:
@@ -33,6 +34,8 @@ class SerialWidget:
         # Serial port updating logic
         self.update_ports_button = Button(self.frame,text="Update Serial Ports",command=self._update_serial_ports)
         self.update_ports_button.grid(row=3,column=1,sticky='nesw')
+        
+        self.start_time = None
 
     def get_frame(self):
         """Get the tkinter frame on which this object is drawn.
@@ -51,6 +54,7 @@ class SerialWidget:
             self.connect_serial_text.set("Start polling devices")
             self.parent.serial_connected = False
             self.update_ports_button.configure(state='normal')
+            self.start_time = None
             for obj in self.parent.all_widgets:
                 obj.close_serial()
             print("Closing all connections.")
@@ -59,6 +63,7 @@ class SerialWidget:
             self.connect_serial_text.set("Stop polling devices")
             self.parent.serial_connected = True
             self.update_ports_button.configure(state='disabled')#So you can't update serials while serial is polling
+            self.start_time = time.time()
             
             # Prompt widgets to connect to their devices
             for obj in self.parent.all_widgets:
@@ -102,6 +107,13 @@ class SerialWidget:
 
     def _poll_interlocks(self):
         """Execute every interlock function that has been added to the dashboard."""
+        
+        # Wait 5 seconds for things to settle before actually polling the interlocks
+        if self.start_time is None:
+            return
+        if (time.time() - self.start_time) < 5:
+            return
+        
         for fn in self.parent.all_interlocks:
             try:
                 fn()
