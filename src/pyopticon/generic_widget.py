@@ -334,20 +334,23 @@ class GenericWidget:
                         (cmd,widget) = self.queue.get()
                         
                         if cmd == 'UPDATE': # Update the widget however desired
-                            self.doing_update = True
+                            widget.doing_update = True
                             widget._update()
-                            self.doing_update = False # Flag to let us warn if the polling interval is too short
+                            widget.doing_update = False # Flag to let us warn if the polling interval is too short
 
                         elif cmd == 'CONFIRM': # Tell the thread to update the system state
                             widget._on_confirm()
 
                         elif cmd == 'HANDSHAKE': # Tell the thread to open serial and do the handshake
-                            self.doing_handshake = True
+                            widget.doing_handshake = True
                             widget._handshake()
-                            self.doing_handshake = False
+                            widget.doing_handshake = False
 
                 except Exception as e:
                     self.parent_dashboard.exc_handler(e,'system',self.name)
+                finally:
+                    self.doing_handshake = False
+                    self.doing_update = False
 
                 time.sleep(0.05)
 
@@ -397,7 +400,10 @@ class GenericWidget:
             print("\"Confirm\" pressed for "+str(self.name)+" while still handshaking.")
             return
         
-        self.queue.put(('CONFIRM',self))
+        if not self.thread_shared:
+            self.queue.put(('CONFIRM',self))
+        else:
+            self.widget_to_share_thread_with.queue.put(('CONFIRM',self))
 
     def _on_confirm(self):
         try:

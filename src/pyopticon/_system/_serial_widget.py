@@ -85,12 +85,15 @@ class SerialWidget:
                     if obj.doing_handshake:
                         print("Warning: widget '"+obj.name+"' prompted to update before handshake complete. Ignoring...")
                         continue
-
-                obj.queue.put(('UPDATE',obj)) #Prompt each widget to update
                 
                 if hasattr(obj,'doing_update'):
                     if obj.doing_update:
-                        print("Warning: widget '"+obj.name+"' prompted to update before the previous update cycle finished. Consider polling less often using update_every_n_cycles argument, or else the dashboard may lag.")
+                        print("Warning: widget '"+obj.name+"' prompted to update before the previous update cycle finished. " + 
+                              "Consider polling less often using update_every_n_cycles argument, or else the dashboard may lag.")
+                        continue
+                
+                obj.queue.put(('UPDATE',obj)) #Prompt each widget to update
+                
         self.root.after(self.serial_polling_wait,self._update_widgets)
         self._poll_interlocks()
 
