@@ -87,6 +87,12 @@ class SerialWidget:
                         continue
                 
                 if hasattr(obj,'doing_update'):
+                    if hasattr(obj, 'update_every_n_cycles') and hasattr(obj, 'update_cycle_counter'):
+                        obj.update_cycle_counter += 1 # Some devices may only update every 2nd or 3rd cycle
+                        obj.update_cycle_counter %= obj.update_every_n_cycles
+                        if self._update_cycle_counter != 0:
+                            continue
+
                     if obj.doing_update:
                         print("Warning: widget '"+obj.name+"' prompted to update before the previous update cycle finished. " + 
                               "Consider polling less often using update_every_n_cycles argument, or else the dashboard may lag.")
