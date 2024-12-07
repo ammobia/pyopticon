@@ -90,7 +90,8 @@ class SerialWidget:
                     if hasattr(obj, 'update_every_n_cycles') and hasattr(obj, 'update_cycle_counter'):
                         obj.update_cycle_counter += 1 # Some devices may only update every 2nd or 3rd cycle
                         obj.update_cycle_counter %= obj.update_every_n_cycles
-                        if self._update_cycle_counter != 0:
+                        if obj.update_cycle_counter != 0:
+                            # print(f"Cycle counter has remaining counts on {obj}, skipping...")
                             continue
 
                     if obj.doing_update:

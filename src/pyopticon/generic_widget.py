@@ -56,8 +56,8 @@ class GenericWidget:
         self.thread_shared = (widget_to_share_thread_with!=None) # Share the serial connection with a previously constructed device
         self.widget_to_share_thread_with=widget_to_share_thread_with
         self.no_serial = no_serial
-        self.update_every_n_cycles=update_every_n_cycles
-        self.update_cycle_counter=-1 # Used by the serial widget to check if update is necessary
+        self.update_every_n_cycles = update_every_n_cycles
+        self.update_cycle_counter = -1 # Used by the serial widget to check if update is necessary
 
         # Check kwargs
         if not no_serial and self.widget_to_share_thread_with==None:
