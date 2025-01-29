@@ -8,6 +8,7 @@ from ._system._serial_widget import SerialWidget
 from ._system._automation_widget import AutomationWidget
 from ._system._data_logging_widget import DataLoggingWidget
 from ._system._socket_widget import SocketWidget
+from ._system._status_widget import StatusWidget
 import datetime
 import traceback
 
@@ -119,6 +120,14 @@ class PyOpticonDashboard:
         self._logging_control_widget.get_frame().grid(row=i,column=0,padx=self.x_pad,pady=self.y_pad)
         i+=1
         self.register_observer(self._logging_control_widget)
+
+        # System state management
+        self.system_state = "Not Running"
+        self._status_widget = StatusWidget(self)
+        self._status_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad)
+        i += 1
+        self.all_widgets.append(self._status_widget)
+        self.register_observer(self._status_widget)
     
     def add_widget(self, widget, row, column):
         """Add a widget to the dashboard at the specified row and column, each indexed from 0. 
@@ -431,4 +440,15 @@ class PyOpticonDashboard:
             for child in frame.winfo_children():
                 if ('tkinter.Label' in s) or ('tkinter.Button' in s) or ('tkinter.OptionMenu' in s) or ('tkinter.Entry' in s):
                     child.update()
-                    
+
+    def set_system_state(self, new_state):
+        """Set the system state and notify observers."""
+        if new_state not in ["Running", "Not Running", "Maintenance"]:
+            raise ValueError("Invalid system state")
+        self.system_state = new_state
+        self.notify("SYSTEM_STATE_CHANGED")
+
+    def get_system_state(self):
+        """Get the current system state."""
+        return self.system_state
+

@@ -281,6 +281,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
                 self.automation_running_label.set("(finished!)")
                 self.lines_loaded.set("0/"+str(len(self.delay_list))+" steps done.")
                 self.awaiting = False
+                self.parent.set_system_state("Not Running")
                 print("Script successfully finished.")
                 return
             else:
@@ -313,6 +314,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
             messagebox.showinfo("","Please open serial communications before starting an automation script.")
             return
         print("Starting automated script.")
+        self.parent.set_system_state("Running")
         # Populate absolute start times
         t0 = time.time()
         rel_times = []
@@ -409,6 +411,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
     def _stop_automated_tasks(self):
         """Stop the automation script and go back to the beginning"""
         print("Aborting automated script.")
+        self.parent.set_system_state("Not Running")
         self._buttons_stopped_mode()
         self.pause_tasks = True
         self.automation_index = 0
