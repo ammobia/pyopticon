@@ -126,7 +126,6 @@ class PyOpticonDashboard:
         self._status_widget = StatusWidget(self)
         self._status_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad)
         i += 1
-        self.all_widgets.append(self._status_widget)
         self.register_observer(self._status_widget)
     
     def add_widget(self, widget, row, column):
