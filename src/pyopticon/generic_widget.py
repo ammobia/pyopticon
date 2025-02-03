@@ -56,8 +56,8 @@ class GenericWidget:
         self.thread_shared = (widget_to_share_thread_with!=None) # Share the serial connection with a previously constructed device
         self.widget_to_share_thread_with=widget_to_share_thread_with
         self.no_serial = no_serial
-        self.update_every_n_cycles=update_every_n_cycles
-        self._update_cycle_counter=-1
+        self.update_every_n_cycles = update_every_n_cycles
+        self.update_cycle_counter = -1 # Used by the serial widget to check if update is necessary
 
         # Check kwargs
         if not no_serial and self.widget_to_share_thread_with==None:
@@ -334,20 +334,23 @@ class GenericWidget:
                         (cmd,widget) = self.queue.get()
                         
                         if cmd == 'UPDATE': # Update the widget however desired
-                            self.doing_update = True
+                            widget.doing_update = True
                             widget._update()
-                            self.doing_update = False # Flag to let us warn if the polling interval is too short
+                            widget.doing_update = False # Flag to let us warn if the polling interval is too short
 
                         elif cmd == 'CONFIRM': # Tell the thread to update the system state
                             widget._on_confirm()
 
                         elif cmd == 'HANDSHAKE': # Tell the thread to open serial and do the handshake
-                            self.doing_handshake = True
+                            widget.doing_handshake = True
                             widget._handshake()
-                            self.doing_handshake = False
+                            widget.doing_handshake = False
 
                 except Exception as e:
                     self.parent_dashboard.exc_handler(e,'system',self.name)
+                finally:
+                    self.doing_handshake = False
+                    self.doing_update = False
 
                 time.sleep(0.05)
 
@@ -397,7 +400,10 @@ class GenericWidget:
             print("\"Confirm\" pressed for "+str(self.name)+" while still handshaking.")
             return
         
-        self.queue.put(('CONFIRM',self))
+        if not self.thread_shared:
+            self.queue.put(('CONFIRM',self))
+        else:
+            self.widget_to_share_thread_with.queue.put(('CONFIRM',self))
 
     def _on_confirm(self):
         try:
@@ -406,12 +412,8 @@ class GenericWidget:
             self.parent_dashboard.exc_handler(e,'on_confirm',self.name)
 
     def _update(self):
-        """Executes every time the widget is prompted to update. Checks whether to update this cycle, checks whether 
+        """Executes every time the widget is prompted to update. Checks whether 
         serial is connected, and then calls the on_update method that is hopefully defined in a subclass implementation."""
-        self._update_cycle_counter+=1 #Some devices may only update every 2nd or 3rd cycle
-        self._update_cycle_counter%=self.update_every_n_cycles
-        if self._update_cycle_counter!=0:
-            return
         if not self.handshake_was_successful or self.doing_handshake:
             return
         try:
