@@ -1,6 +1,6 @@
 # Import these for all dashboard objects
 #from tkinter import *
-from tkinter import Tk, font
+from tkinter import Tk, font, Frame, Canvas
 import sys
 import threading
 from ._system._show_hide_widget import ShowHideWidget
@@ -48,7 +48,6 @@ class PyOpticonDashboard:
     :type include_socket_widget: bool, optional
 
     """
-
     def __init__(self, dashboard_name, **kwargs):
         """Constructor for a Dashboard object."""
 
@@ -67,14 +66,27 @@ class PyOpticonDashboard:
             socket_ports = [] # Prevents any socket threads from getting launched
         
         self.name = dashboard_name
+        # Initialize root window
         root = Tk()
         self.root = root
         window_title="PyOpticon 0.2.0"
         self.title = window_title
         root.title(window_title)
+        
+        # Set up border configuration
+        self.border_thickness = 20  # Thickness for caution stripes
+        self.stripe_width = 20     # Width of each stripe in the pattern
+        
+        # Create main frame with padding for caution border
+        self.main_frame = Frame(root, padx=self.border_thickness, pady=self.border_thickness)
+        self.main_frame.grid(row=0, column=0, sticky='nsew')
+        # Configure grid to expand properly
+        root.grid_rowconfigure(0, weight=1)
+        root.grid_columnconfigure(0, weight=1)
+        
         self.offline_mode = offline_mode
-        self.window_resizeable=window_resizeable
-        self.persistent_console_logfile=persistent_console_logfile
+        self.window_resizeable = window_resizeable
+        self.persistent_console_logfile = persistent_console_logfile
 
         self.x_pad = x_pad
         self.y_pad = y_pad
@@ -87,46 +99,48 @@ class PyOpticonDashboard:
         # Add a list of interlocks (functions)
         self.all_interlocks = []
 
-        # Initalize list of observers for Observable Pattern
+        # Initialize list of observers for Observable Pattern
         self._observers = []
 
         # Create a serial control widget
         self.serial_connected = False
         self._serial_control_widget = SerialWidget(self, polling_interval_ms)
-        self._serial_control_widget.get_frame().grid(row=0,column=0,padx=self.x_pad,pady=self.y_pad)
+        self._serial_control_widget.get_frame().grid(row=0, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
 
         # Control widget for showing and hiding things
         self._show_hide_control_widget = ShowHideWidget(self)
-        self._show_hide_control_widget.get_frame().grid(row=1,column=0,padx=self.x_pad,pady=self.y_pad)
+        self._show_hide_control_widget.get_frame().grid(row=1, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
 
         i=2 #To facilitate option to get rid of sockets / automation widgets
 
-        # Control widget for running scripts. If not included, the object is created but never displayer.
+        # Control widget for running scripts
         self._automation_control_widget = AutomationWidget(self)
         if self.include_auto_widget:
-            self._automation_control_widget.get_frame().grid(row=i,column=0,padx=self.x_pad,pady=self.y_pad)
+            self._automation_control_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
             i+=1
             self.all_widgets.append(self._automation_control_widget)
             self.register_observer(self._automation_control_widget)
 
-        # Create a widget for socket control. If not included, the object is created but never displayed.
-        self._socket_widget = SocketWidget(self,socket_ports)
+        # Create a widget for socket control
+        self._socket_widget = SocketWidget(self, socket_ports)
         if self.include_socket_widget:
-            self._socket_widget.get_frame().grid(row=i,column=0,padx=self.x_pad,pady=self.y_pad)
+            self._socket_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
             i+=1
 
         # Control widget for data logging
         self._logging_control_widget = DataLoggingWidget(self)
-        self._logging_control_widget.get_frame().grid(row=i,column=0,padx=self.x_pad,pady=self.y_pad)
+        self._logging_control_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
         i+=1
         self.register_observer(self._logging_control_widget)
 
         # System state management
         self.system_state = "Not Running"
         self._status_widget = StatusWidget(self)
-        self._status_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad)
+        self._status_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
         i += 1
         self.register_observer(self._status_widget)
+
+        self.caution_banner = None
     
     def add_widget(self, widget, row, column):
         """Add a widget to the dashboard at the specified row and column, each indexed from 0. 
@@ -141,16 +155,25 @@ class PyOpticonDashboard:
         :param column: The column in the dashboard's Tkinter grid at which to place the widget, indexed from 0
         :type column: int
         """
-        widget.get_frame().grid(row=row, column = column, padx=self.x_pad,pady=self.y_pad)
+        # Add widget to the main frame
+        widget.get_frame().grid(row=row, column=column, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
         self.all_widgets.append(widget)
         if hasattr(widget,'name'):
             if widget.name in self.all_widget_names:
-                print("Warning: adding a widget with a duplicate name '"+str(widget.name)+"'. Data logging issues may result. Best practice is to use distinct names.")
+                print("Warning: adding a widget with a duplicate name '"+str(widget.name)+"'. Data logging issues may result.")
             self.all_widget_names.append(widget.name)
         if hasattr(widget,'nickname'):
             if widget.nickname in self.widgets_by_nickname.keys():
-                print("Warning: adding a widget with a duplicate nickname '"+str(widget.nickname)+"'. Automation issues may result. Best practice is to use distinct nicknames.")
+                print("Warning: adding a widget with a duplicate nickname '"+str(widget.nickname)+"'.")
             self.widgets_by_nickname[widget.nickname] = widget
+
+        # Center the window on the screen
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
 
     def add_interlock(self, fn):
         """Add an interlock function that will be called once every polling cycle.\n
@@ -446,8 +469,126 @@ class PyOpticonDashboard:
             raise ValueError("Invalid system state")
         self.system_state = new_state
         self.notify("SYSTEM_STATE_CHANGED")
+        self.update_caution_banner()
 
     def get_system_state(self):
         """Get the current system state."""
         return self.system_state
+
+    def update_caution_banner(self):
+        """Update the caution banner based on the current system state."""
+        if self.system_state == "Maintenance":
+            if self.caution_banner is None:
+                # Create four separate canvases for each border
+                self.caution_banner = []
+                stripe_width = self.stripe_width  # Width of each diagonal stripe
+                border_thickness = self.border_thickness  # Use consistent border thickness
+                
+                # Top border
+                top = Canvas(self.root, width=self.root.winfo_width(), height=border_thickness, highlightthickness=0)
+                top.place(x=0, y=0)
+                # Draw diagonal stripes
+                x = -stripe_width  # Start before edge to ensure full coverage
+                while x < self.root.winfo_width() + stripe_width:
+                    # Yellow stripe
+                    top.create_polygon(
+                        x, 0,
+                        x + stripe_width, 0,
+                        x + stripe_width + border_thickness, border_thickness,
+                        x + border_thickness, border_thickness,
+                        fill='yellow', outline='yellow'
+                    )
+                    # Black stripe
+                    top.create_polygon(
+                        x + stripe_width, 0,
+                        x + 2*stripe_width, 0,
+                        x + 2*stripe_width + border_thickness, border_thickness,
+                        x + stripe_width + border_thickness, border_thickness,
+                        fill='black', outline='black'
+                    )
+                    x += 2*stripe_width
+                self.caution_banner.append(top)
+                
+                # Bottom border
+                bottom = Canvas(self.root, width=self.root.winfo_width(), height=border_thickness, highlightthickness=0)
+                bottom.place(x=0, y=self.root.winfo_height()-border_thickness)
+                # Draw diagonal stripes (reversed direction)
+                x = -stripe_width
+                while x < self.root.winfo_width() + stripe_width:
+                    # Yellow stripe
+                    bottom.create_polygon(
+                        x, border_thickness,
+                        x + stripe_width, border_thickness,
+                        x + stripe_width + border_thickness, 0,
+                        x + border_thickness, 0,
+                        fill='yellow', outline='yellow'
+                    )
+                    # Black stripe
+                    bottom.create_polygon(
+                        x + stripe_width, border_thickness,
+                        x + 2*stripe_width, border_thickness,
+                        x + 2*stripe_width + border_thickness, 0,
+                        x + stripe_width + border_thickness, 0,
+                        fill='black', outline='black'
+                    )
+                    x += 2*stripe_width
+                self.caution_banner.append(bottom)
+                
+                # Left border
+                left = Canvas(self.root, width=border_thickness, height=self.root.winfo_height(), highlightthickness=0)
+                left.place(x=0, y=0)
+                # Draw diagonal stripes
+                y = -stripe_width
+                while y < self.root.winfo_height() + stripe_width:
+                    # Yellow stripe
+                    left.create_polygon(
+                        0, y,
+                        border_thickness, y + border_thickness,
+                        border_thickness, y + stripe_width + border_thickness,
+                        0, y + stripe_width,
+                        fill='yellow', outline='yellow'
+                    )
+                    # Black stripe
+                    left.create_polygon(
+                        0, y + stripe_width,
+                        border_thickness, y + stripe_width + border_thickness,
+                        border_thickness, y + 2*stripe_width + border_thickness,
+                        0, y + 2*stripe_width,
+                        fill='black', outline='black'
+                    )
+                    y += 2*stripe_width
+                self.caution_banner.append(left)
+                
+                # Right border
+                right = Canvas(self.root, width=border_thickness, height=self.root.winfo_height(), highlightthickness=0)
+                right.place(x=self.root.winfo_width()-border_thickness, y=0)
+                # Draw diagonal stripes (reversed direction)
+                y = -stripe_width
+                while y < self.root.winfo_height() + stripe_width:
+                    # Yellow stripe
+                    right.create_polygon(
+                        border_thickness, y,
+                        0, y + border_thickness,
+                        0, y + stripe_width + border_thickness,
+                        border_thickness, y + stripe_width,
+                        fill='yellow', outline='yellow'
+                    )
+                    # Black stripe
+                    right.create_polygon(
+                        border_thickness, y + stripe_width,
+                        0, y + stripe_width + border_thickness,
+                        0, y + 2*stripe_width + border_thickness,
+                        border_thickness, y + 2*stripe_width,
+                        fill='black', outline='black'
+                    )
+                    y += 2*stripe_width
+                self.caution_banner.append(right)
+                
+        else:
+            if self.caution_banner is not None:
+                # Destroy all border canvases
+                for border in self.caution_banner:
+                    border.destroy()
+                self.caution_banner = None
+
 
