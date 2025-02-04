@@ -18,3 +18,13 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/richardsrandall/pyopticon"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
