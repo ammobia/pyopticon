@@ -26,7 +26,9 @@ class StatusWidget:
         current_state = self.parent_dashboard.get_system_state()
         if current_state == "Not Running":
             self.parent_dashboard.set_system_state("Maintenance")
+            self.parent_dashboard.set_interlocks_disabled(True)
             self.maintenance_button.config(text="Exit Maintenance Mode")
         elif current_state == "Maintenance":
             self.parent_dashboard.set_system_state("Not Running")
+            self.parent_dashboard.set_interlocks_disabled(False)
             self.maintenance_button.config(text="Enter Maintenance Mode")

@@ -101,9 +101,6 @@ class PyOpticonDashboard:
         self.widgets_by_nickname = dict()
         self.all_widget_names = []
 
-        # Add a list of interlocks (functions)
-        self.all_interlocks = []
-
         # Initialize list of observers for Observable Pattern
         self._observers = []
 
@@ -145,6 +142,10 @@ class PyOpticonDashboard:
         i += 1
         self.register_observer(self._status_widget)
 
+        # Add a list of interlocks (functions)
+        self.all_interlocks = []
+        self.disabled_interlocks = []
+        self.interlocks_disabled = False
         self.caution_banner = None
 
     def set_app_icon(self, icon_paths=None):
@@ -256,6 +257,16 @@ class PyOpticonDashboard:
         :type fn: function
         """
         self.all_interlocks.append(fn)
+
+    def set_interlocks_disabled(self, disabled):
+        if disabled:
+            self.interlocks_disabled = True
+            self.disabled_interlocks = self.all_interlocks
+            self.all_interlocks = []
+        else:
+            self.all_interlocks = self.disabled_interlocks
+            self.disabled_interlocks = []
+            self.interlocks_disabled = False
 
     def notify(self, event, notifier =None):
         """ Updates observers when there is an event logged. If an observer created the event, they are not updated.
