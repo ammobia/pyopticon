@@ -1,16 +1,21 @@
 # Import these for all dashboard objects
-#from tkinter import *
 from tkinter import Tk, font, Frame, Canvas
+from tkinter import PhotoImage
+
 import sys
 import threading
+import os
+import platform
+import datetime
+import traceback
+
 from ._system._show_hide_widget import ShowHideWidget
 from ._system._serial_widget import SerialWidget
 from ._system._automation_widget import AutomationWidget
 from ._system._data_logging_widget import DataLoggingWidget
 from ._system._socket_widget import SocketWidget
 from ._system._status_widget import StatusWidget
-import datetime
-import traceback
+
 
 
 class PyOpticonDashboard:
@@ -69,7 +74,7 @@ class PyOpticonDashboard:
         # Initialize root window
         root = Tk()
         self.root = root
-        window_title="PyOpticon 0.2.0"
+        window_title = "PyOpticon 0.2.0"
         self.title = window_title
         root.title(window_title)
         
@@ -141,6 +146,69 @@ class PyOpticonDashboard:
         self.register_observer(self._status_widget)
 
         self.caution_banner = None
+
+    def set_app_icon(self, icon_paths=None):
+        """
+        Set the application icon cross-platform using relative paths
+        
+        Args:
+            root: The Tkinter root window
+            icon_paths: Either a string path to a single icon or a dict of platform-specific paths.
+                    Paths should be relative to the script's directory.
+                    Example: 
+                    {
+                        'Windows': 'assets/icon.ico',
+                        'Darwin': 'assets/icon.icns',
+                        'Linux': 'assets/icon.png'
+                    }
+                    or just 'assets/icon.png' for a single icon file
+        """
+        if not icon_paths:
+            return
+            
+        # Get the directory of the executing script, not this module
+        if getattr(sys, 'frozen', False):
+            # Handle PyInstaller executable
+            script_dir = os.path.dirname(sys.executable)
+        else:
+            # Get directory of the script that was run, not this module
+            try:
+                script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+            except:
+                print("Could not determine executing script directory")
+                return
+            
+        system = platform.system()
+        
+        # Handle dict of platform-specific paths
+        if isinstance(icon_paths, dict):
+            if system in icon_paths:
+                icon_path = icon_paths[system]
+            else:
+                print(f"No icon specified for platform {system}")
+                return
+        else:
+            # Single path for all platforms
+            icon_path = icon_paths
+            
+        # Convert to absolute path
+        full_path = os.path.join(script_dir, icon_path)
+        
+        if not os.path.exists(full_path):
+            print(f"Icon file not found: {full_path}")
+            return
+            
+        try:
+            if system == "Windows":
+                self.root.iconbitmap(full_path)
+            elif system == "Darwin":  # macOS
+                icon = PhotoImage(file=full_path)
+                self.root.iconphoto(True, icon)
+            else:  # Linux
+                icon = PhotoImage(file=full_path)
+                self.root.iconphoto(True, icon)
+        except Exception as e:
+            print(f"Error setting app icon: {str(e)}")
     
     def add_widget(self, widget, row, column):
         """Add a widget to the dashboard at the specified row and column, each indexed from 0. 
