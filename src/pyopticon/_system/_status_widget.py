@@ -1,5 +1,7 @@
 from tkinter import Label, Frame, Button
 
+from ..dashboard import PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED
+
 class StatusWidget:
     def __init__(self, parent_dashboard):
         self.parent_dashboard = parent_dashboard
@@ -13,8 +15,8 @@ class StatusWidget:
     def get_frame(self):
         return self.frame
 
-    def update(self, event):
-        if event == "SYSTEM_STATE_CHANGED":
+    def handle_notification(self, event):
+        if event == PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED:
             new_state = self.parent_dashboard.get_system_state()
             self.label.config(text=f"System State: {new_state}")
             if new_state == "Not Running" or new_state == "Maintenance":

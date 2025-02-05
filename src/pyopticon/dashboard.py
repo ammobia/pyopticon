@@ -16,7 +16,8 @@ from ._system._data_logging_widget import DataLoggingWidget
 from ._system._socket_widget import SocketWidget
 from ._system._status_widget import StatusWidget
 
-
+PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER = "PYOPTICON_INTERLOCK_TRIGGER"
+PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED = "PYOPTICON_SYSTEM_STATE_CHANGED"
 
 class PyOpticonDashboard:
     """ A Dashboard is our term for a GUI window containing various 'widgets'. A standalone program should initialize, configure, and run each dashboard. 
@@ -268,7 +269,7 @@ class PyOpticonDashboard:
             self.disabled_interlocks = []
             self.interlocks_disabled = False
 
-    def notify(self, event, notifier =None):
+    def notify(self, event, notifier=None):
         """ Updates observers when there is an event logged. If an observer created the event, they are not updated.
 
         :param modifier: the observer that created an event
@@ -278,7 +279,7 @@ class PyOpticonDashboard:
         for observer in self._observers:
             if notifier != observer:
                 print("Notified: " + str(observer))
-                observer.update(event)
+                observer.handle_notification(event)
 
     def register_observer(self, observer):
         """If an observer is not on the list, append it to the list.
@@ -547,7 +548,7 @@ class PyOpticonDashboard:
         if new_state not in ["Running", "Not Running", "Maintenance"]:
             raise ValueError("Invalid system state")
         self.system_state = new_state
-        self.notify("SYSTEM_STATE_CHANGED")
+        self.notify(PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED)
         self.update_caution_banner()
 
     def get_system_state(self):

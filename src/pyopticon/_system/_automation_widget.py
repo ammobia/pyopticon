@@ -6,6 +6,8 @@ import time
 import traceback
 from .. import minimal_widget
 
+from ..dashboard import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER
+
 PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "New Automation File"
 
 # Widget for automated programs (this one is a little bit complicated!)
@@ -391,7 +393,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         print("Loaded "+filename)
 
 
-    def update(self, event):
+    def handle_notification(self, event):
         """This function runs when a notification is sent by the publisher (dashboard) and checks the event.  
 
         :param event: The event that just occurred
@@ -400,6 +402,9 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         if PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE in event:
             file = event.split(' ')[-1]
             self.load_file(file)
+        elif PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER in event:
+            self._stop_automated_tasks()
+        
     # Helper functions to enable/disable buttons
 
     def _pause_automated_tasks(self):
