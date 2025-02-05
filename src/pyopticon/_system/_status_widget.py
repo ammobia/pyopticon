@@ -1,6 +1,6 @@
 from tkinter import Label, Frame, Button
 
-from ..dashboard import PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED
+from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED
 
 class StatusWidget:
     def __init__(self, parent_dashboard):

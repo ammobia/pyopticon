@@ -16,8 +16,7 @@ from ._system._data_logging_widget import DataLoggingWidget
 from ._system._socket_widget import SocketWidget
 from ._system._status_widget import StatusWidget
 
-PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER = "PYOPTICON_INTERLOCK_TRIGGER"
-PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED = "PYOPTICON_SYSTEM_STATE_CHANGED"
+from ._system._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER, PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED
 
 class PyOpticonDashboard:
     """ A Dashboard is our term for a GUI window containing various 'widgets'. A standalone program should initialize, configure, and run each dashboard. 

@@ -6,7 +6,7 @@ import time
 import traceback
 from .. import minimal_widget
 
-from ..dashboard import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER
+from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER
 
 PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "New Automation File"
 
