@@ -18,5 +18,7 @@ __pycache__/
 *.pyc
 *.cpython-311.pyc
 
+.pytest_cache/
+
 # Pyopticon Specific
 persistent_logfile.txt
