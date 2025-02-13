@@ -471,9 +471,12 @@ class PyOpticonDashboard:
         :param confirm: Whether or not to execute the widget's confirm function, which usually sends a command to the physical device based on the newly updated field.
         :type confirm: bool
         """
-        self.widgets_by_nickname[target_widget_nickname].set_field(target_field,new_value)
-        if confirm:
-            self.widgets_by_nickname[target_widget_nickname].confirm()
+        try:
+            self.widgets_by_nickname[target_widget_nickname].set_field(target_field,new_value)
+            if confirm:
+                self.widgets_by_nickname[target_widget_nickname].confirm()
+        except Exception as e:
+                print(f"Error setting field {target_field} on target {target_widget_nickname}: {e}")
 
     def get_widget_by_nickname(self, nickname):
         """Get a certain widget based on its nickname. 
