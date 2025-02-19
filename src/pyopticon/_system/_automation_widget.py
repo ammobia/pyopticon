@@ -526,5 +526,5 @@ class AutomationWidget(minimal_widget.MinimalWidget):
     def set_sub_step(self, sub_step_text):
         """Update the sub-step label text"""
         self.sub_step_label_text = sub_step_text
-        self.sub_step_label.config(text=f"Sub-step: {sub_step_text}")
+        self.sub_step_label.config(text=f"Sub Step: {sub_step_text}")
 
