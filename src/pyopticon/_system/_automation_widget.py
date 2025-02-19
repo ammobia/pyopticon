@@ -157,7 +157,9 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         :param hush_warning: Silence the warning when you set a field while a widget's serial isn't connected.
         :type hush_warning: True
         """
-        to_do = lambda: self.attributes[which_field] = new_value
+        def assign_attr(new_value):
+            self.attributes[which_field] = new_value
+        to_do = lambda: assign_attr(new_value)
         self.do_threadsafe(to_do)
 
     def schedule_delay(self, delay):
