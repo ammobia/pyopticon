@@ -8,7 +8,7 @@ from .. import minimal_widget
 
 from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER
 
-PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "New Automation File"
+PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "NewAutomationFile"
 
 # Widget for automated programs (this one is a little bit complicated!)
 class AutomationWidget(minimal_widget.MinimalWidget):
