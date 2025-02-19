@@ -64,6 +64,20 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         self.toggle = Checkbutton(self.frame, text="Enable Step Logging", variable=self.toggle_var, command=self._on_log_toggle)
         self.toggle.grid(row=6,column=2,sticky='nesw')
 
+        # Step labels
+        self.step_label = Label(self.frame, text="Step: None")
+        self.step_label.grid(row=7,column=1,sticky='nesw')
+        self.step_label_text = "None"
+        
+        self.sub_step_label = Label(self.frame, text="Sub-step: None")
+        self.sub_step_label.grid(row=8,column=1,sticky='nesw')
+        self.sub_step_label_text = "None"
+
+        # This makes this wigeted callable by schedule_action
+        self.attributes = dict()
+        self.attributes["Step Label"] = self.step_label_text
+        self.attributes["Sub Step Label"] = self.sub_step_label_text
+
         # Define some automation variables
         self.delay_for_loading = 0 # Keep track of accumulated delay when using schedule_delay function
         self.delay_list = [] # List of delay intervals, in seconds
@@ -111,7 +125,40 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         
         if self.log_automation_steps:
             out["Step"] = str(self.automation_index)
+            out["Step Label"] = self.step_label_text
+            out["Sub Step Label"] = self.sub_step_label_text
         return out
+    
+    def do_threadsafe(self,to_do):
+        """Feeds the specified function to tkinter's after() method with a delay of 0, so that it will be executed in a thread-safe way.
+        
+        :param to_do: The function to execute.
+        :type to_do: function"""
+        tkinter_obj = self.parent_dashboard.get_tkinter_object()
+        tkinter_obj.after(0,to_do)
+
+    def get_field(self, which_field): 
+        """Get the current value of the specified field.
+        
+        :param which_field: The name of the field whose value to get.
+        :type which_field: str
+        :return: The current value of the specified field
+        :rtype: str
+        """
+        return self.attributes[which_field]
+
+    def set_field(self, which_field, new_value, hush_warning=False):
+        """Set the value of the specified field to a specified value.
+        
+        :param which_field: The name of the field whose value to set.
+        :type which_field: str
+        :param new_value: The value to which to set the specified field.
+        :type new_value: str
+        :param hush_warning: Silence the warning when you set a field while a widget's serial isn't connected.
+        :type hush_warning: True
+        """
+        to_do = lambda: self.attributes[which_field] = new_value
+        self.do_threadsafe(to_do)
 
     def schedule_delay(self, delay):
         """This function is meant to be called in automation scripts. It causes a delay before a subsequent call to schedule_function 
@@ -463,3 +510,19 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         self.start_button_text.set("Start")
         self.skip_button.grid_remove()
         self.frame.configure(highlightbackground=self.main_color)
+    
+    def confirm(self):
+        # Only called by the schedule_action method, and only used currently to update step label texts
+        self.set_step(self.attributes["Step Label"])
+        self.set_sub_step(self.attributes["Sub Step Label"])
+
+    def set_step(self, step_text):
+        """Update the step label text"""
+        self.step_label_text = step_text
+        self.step_label.config(text=f"Step: {step_text}")
+
+    def set_sub_step(self, sub_step_text):
+        """Update the sub-step label text"""
+        self.sub_step_label_text = sub_step_text
+        self.sub_step_label.config(text=f"Sub-step: {sub_step_text}")
+

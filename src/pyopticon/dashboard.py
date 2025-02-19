@@ -122,6 +122,9 @@ class PyOpticonDashboard:
             i+=1
             self.all_widgets.append(self._automation_control_widget)
             self.register_observer(self._automation_control_widget)
+        # This is a bit of a hack since we want the automation widget to be addressable by schedule_action
+        # but we don't add it like normal since it's a private widget
+        self.widgets_by_nickname["Automation Widget"] = self._automation_control_widget
 
         # Create a widget for socket control
         self._socket_widget = SocketWidget(self, socket_ports)
