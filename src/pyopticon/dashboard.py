@@ -560,6 +560,9 @@ class PyOpticonDashboard:
         """Get the current system state."""
         return self.system_state
 
+    def set_logging_interval(self, new_interval): # new_interval is a string
+        self._logging_control_widget.time_interval.set(new_interval)
+
     def update_caution_banner(self):
         """Update the caution banner based on the current system state."""
         if self.system_state == "Maintenance":
