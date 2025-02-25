@@ -15,7 +15,7 @@ class StatusWidget:
     def get_frame(self):
         return self.frame
 
-    def handle_notification(self, event):
+    def handle_notification(self, event, info):
         if event == PYOPTICON_DASHBOARD_EVENT_SYSTEM_STATE_CHANGED:
             new_state = self.parent_dashboard.get_system_state()
             self.label.config(text=f"System State: {new_state}")

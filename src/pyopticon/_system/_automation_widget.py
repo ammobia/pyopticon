@@ -6,7 +6,7 @@ import time
 import traceback
 from .. import minimal_widget
 
-from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER
+from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER, PYOPTICON_DASHBOARD_EVENT_AUTOMATION_COMPLETE
 
 PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE = "NewAutomationFile"
 
@@ -332,7 +332,13 @@ class AutomationWidget(minimal_widget.MinimalWidget):
                 self.automation_running_label.set("(finished!)")
                 self.lines_loaded.set("0/"+str(len(self.delay_list))+" steps done.")
                 self.awaiting = False
+
                 self.parent.set_system_state("Not Running")
+
+                # Get the log file path (if there is one) and send it along with the notification
+                log_file_path = self.parent_dashboard._logging_control_widget.filename
+                self.parent_dashboard.notify(PYOPTICON_DASHBOARD_EVENT_AUTOMATION_COMPLETE, info={'file_path': log_file_path})
+
                 print("Script successfully finished.")
                 return
             else:
@@ -442,15 +448,16 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         print("Loaded "+filename)
 
 
-    def handle_notification(self, event):
+    def handle_notification(self, event, info=None):
         """This function runs when a notification is sent by the publisher (dashboard) and checks the event.  
 
         :param event: The event that just occurred
         :type event: String
         """
         if PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE in event:
-            file = event.split(' ')[-1]
-            self.load_file(file)
+            file = info.get('file_name', None)
+            if file is not None:
+                self.load_file(file)
         elif PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER in event:
             self._stop_automated_tasks()
         

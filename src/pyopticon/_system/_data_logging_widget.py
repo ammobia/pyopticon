@@ -166,6 +166,6 @@ class DataLoggingWidget():
         else:
             self.empty_file = True
 
-    def handle_notification(self, event):
+    def handle_notification(self, event, info=None):
         """Has an update function because this is listed as an observer of the dashboard."""
         pass
