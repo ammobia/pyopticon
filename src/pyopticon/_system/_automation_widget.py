@@ -95,7 +95,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         self.latest_await_index = -1
         self.skip_await_flag=False
 
-        self.log_automation_steps=False
+        self.log_automation_steps=True
 
     def _on_log_toggle(self):
         self.log_automation_steps = self.toggle_var.get()
