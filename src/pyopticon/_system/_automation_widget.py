@@ -159,6 +159,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         """
         def assign_attr(new_value):
             self.attributes[which_field] = new_value
+            self.confirm()
         to_do = lambda: assign_attr(new_value)
         self.do_threadsafe(to_do)
 
