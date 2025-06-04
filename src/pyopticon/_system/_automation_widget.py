@@ -398,13 +398,18 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         filename = fd.askopenfilename()
         self.load_file(filename)
 
-    def load_file(self, filename):
+    def load_file(self, filename, automation_input_parameters=None):
         """Load an automation script from a file. Generates a list of functions and a list of the delays before each one will be 
         executed after starting the script. Sets GUI elements like '0/n steps done' and 'xx:xx:xx remaining'.\n
         
         Note that this method loads the contents of the automation file and calls exec() on it. This is obviously not secure; only use 
         automation scripts whose authors you trues. exec() is called in a namespace with schedule_delay, schedule_action, schedule_function, and schedule_await_condition 
         already defined as local variables for you to use.
+        
+        :param filename: The path to the automation script file to load
+        :type filename: str
+        :param automation_input_parameters: Optional dictionary of input parameters for the automation script
+        :type automation_input_parameters: dict, optional
         """
 
         # Reset everything
@@ -427,11 +432,16 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         f = str.split(filename,'/')
         f = f[len(f)-1] # We just want the file name to display, not its whole path
         script = open(filename).read()
+        # Prepare automation input parameters
+        if automation_input_parameters is None:
+            automation_input_parameters = {}
+        
         try:
             exec(script, #We only want certain special keywords in the namespace that is executed
                  {'schedule_delay':self.schedule_delay, 'schedule_action':self.schedule_action,
                   'schedule_function':self.schedule_function, 'get_dashboard':self.get_parent_dashboard,
-                  'schedule_await_condition':self.schedule_await_condition},{})
+                  'schedule_await_condition':self.schedule_await_condition,
+                  'automation_input_parameters':automation_input_parameters},{})
         except Exception as e:
             print(traceback.format_exc())
             messagebox.showinfo("","The script you loaded contains an error. See console for details.")
@@ -457,8 +467,9 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         """
         if PYOPTICON_DASHBOARD_EVENT_NEW_AUTOMATION_FILE in event:
             file = info.get('file_name', None)
+            automation_input_parameters = info.get('recipe_input_parameters', {}) if info else {}
             if file is not None:
-                self.load_file(file)
+                self.load_file(file, automation_input_parameters=automation_input_parameters)
         elif PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER in event:
             self._stop_automated_tasks()
         
