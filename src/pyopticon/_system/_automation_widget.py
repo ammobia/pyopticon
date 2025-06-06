@@ -5,6 +5,7 @@ from datetime import timedelta
 import time
 import traceback
 from .. import minimal_widget
+from .. import dashboard_state_manager
 
 from ._dashboard_events import PYOPTICON_DASHBOARD_EVENT_INTERLOCK_TRIGGER, PYOPTICON_DASHBOARD_EVENT_AUTOMATION_COMPLETE
 
@@ -441,7 +442,9 @@ class AutomationWidget(minimal_widget.MinimalWidget):
                  {'schedule_delay':self.schedule_delay, 'schedule_action':self.schedule_action,
                   'schedule_function':self.schedule_function, 'get_dashboard':self.get_parent_dashboard,
                   'schedule_await_condition':self.schedule_await_condition,
-                  'automation_input_parameters':automation_input_parameters},{})
+                  'automation_input_parameters':automation_input_parameters,
+                  'schedule_dashboard_state':dashboard_state_manager.schedule_dashboard_state,
+                  'create_state_scheduler':dashboard_state_manager.create_state_scheduler},{})
         except Exception as e:
             print(traceback.format_exc())
             messagebox.showinfo("","The script you loaded contains an error. See console for details.")
