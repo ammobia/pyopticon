@@ -118,36 +118,6 @@ def create_state_manager(states_file: str) -> DashboardStateManager:
     return DashboardStateManager(states_file)
 
 
-def schedule_dashboard_state(state_name: str, states_file: str):
-    """
-    Schedule a dashboard state change in an automation script.
-    
-    This function should be called within an automation script to schedule
-    a dashboard state change. It uses schedule_function to queue the state change.
-    
-    Currently only valve configurations are supported in the state definitions.
-    
-    Args:
-        state_name: Name of the state to apply
-        states_file: Path to the dashboard states YAML file
-    
-    Example:
-        # At the top of your automation script:
-        STATES_FILE = "my_dashboard_states.yaml"
-        
-        # In your automation sequence:
-        schedule_dashboard_state('flow_through', STATES_FILE)
-        schedule_delay(delay="00:10:00")
-        schedule_dashboard_state('bypass', STATES_FILE)
-    """
-    def apply_state_wrapper(dashboard):
-        manager = DashboardStateManager(states_file)
-        manager.apply_state(state_name, dashboard)
-    
-    # Note: schedule_function is available in the automation script namespace
-    schedule_function(apply_state_wrapper)
-
-
 def get_dashboard_states(states_file: str) -> list:
     """
     Get list of available states from a dashboard states file.
@@ -160,47 +130,3 @@ def get_dashboard_states(states_file: str) -> list:
     """
     manager = DashboardStateManager(states_file)
     return manager.list_states()
-
-
-def create_state_scheduler(states_file: str) -> Callable:
-    """
-    Create a state scheduling function bound to a specific states file.
-    
-    This is useful when you want to avoid repeating the states_file parameter.
-    
-    Args:
-        states_file: Path to the dashboard states YAML file
-        
-    Returns:
-        Function that takes state_name and schedules the state change
-        
-    Example:
-        # At the top of your automation script:
-        schedule_state = create_state_scheduler("my_dashboard_states.yaml")
-        
-        # In your automation sequence:
-        schedule_state('flow_through')
-        schedule_delay(delay="00:10:00")
-        schedule_state('bypass')
-        
-        # The YAML file should define states like:
-        # states:
-        #   flow_through:
-        #     description: "Flow through reactor"
-        #     valves:
-        #       0: open
-        #       1: closed
-        #   bypass:
-        #     description: "Bypass reactor"  
-        #     valves:
-        #       0: closed
-        #       1: open
-    """
-    manager = DashboardStateManager(states_file)
-    
-    def schedule_state(state_name: str):
-        def apply_state_wrapper(dashboard):
-            manager.apply_state(state_name, dashboard)
-        schedule_function(apply_state_wrapper)
-    
-    return schedule_state

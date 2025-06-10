@@ -197,6 +197,40 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         self.lambda_list.append(function)
         self.time_to_go = sum(self.delay_list)
 
+    def schedule_dashboard_state(self, state_name: str, states_file: str):
+        """Schedule a dashboard state change in an automation script.
+        
+        This function is meant to be called in automation scripts to apply a named
+        dashboard state configuration from a YAML file.
+        
+        :param state_name: Name of the state to apply
+        :type state_name: str
+        :param states_file: Path to the dashboard states YAML file
+        :type states_file: str
+        """
+        def apply_state_wrapper(dashboard):
+            manager = dashboard_state_manager.DashboardStateManager(states_file)
+            manager.apply_state(state_name, dashboard)
+        self.schedule_function(apply_state_wrapper)
+    
+    def create_state_scheduler(self, states_file: str):
+        """Create a state scheduler bound to a specific states file.
+        
+        This is useful when you want to avoid repeating the states_file parameter
+        in automation scripts.
+        
+        :param states_file: Path to the dashboard states YAML file
+        :type states_file: str
+        :return: Function that takes state_name and schedules the state change
+        :rtype: function
+        """
+        manager = dashboard_state_manager.DashboardStateManager(states_file)
+        def schedule_state(state_name: str):
+            def apply_state_wrapper(dashboard):
+                manager.apply_state(state_name, dashboard)
+            self.schedule_function(apply_state_wrapper)
+        return schedule_state
+
     def schedule_action(self, target_widget_nickname, target_field_name, new_target_value, confirm=True):
         """This function is meant to be called in automation scripts. It changes the target field in the target widget to a certain value, 
         then optionally executes that widget's confirm function. It's useful for scheduling most simple automation tasks, e.g., flipping a valve 
@@ -443,8 +477,8 @@ class AutomationWidget(minimal_widget.MinimalWidget):
                   'schedule_function':self.schedule_function, 'get_dashboard':self.get_parent_dashboard,
                   'schedule_await_condition':self.schedule_await_condition,
                   'automation_input_parameters':automation_input_parameters,
-                  'schedule_dashboard_state':dashboard_state_manager.schedule_dashboard_state,
-                  'create_state_scheduler':dashboard_state_manager.create_state_scheduler},{})
+                  'schedule_dashboard_state':self.schedule_dashboard_state,
+                  'create_state_scheduler':self.create_state_scheduler},{})
         except Exception as e:
             print(traceback.format_exc())
             messagebox.showinfo("","The script you loaded contains an error. See console for details.")
