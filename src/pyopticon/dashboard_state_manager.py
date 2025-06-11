@@ -89,9 +89,9 @@ class DashboardStateManager:
     def _apply_valve_config(self, valve_config: Dict[int, str], dashboard):
         """Apply valve configurations."""
         try:
-            valves_widget = dashboard.get_widget_by_nickname("Valves")
+            valves_widget = dashboard.get_widget_by_nickname("Valve Widget")
         except KeyError:
-            print("  Warning: No 'Valves' widget found on dashboard")
+            print("  Warning: No 'Valve Widget' widget found on dashboard")
             return
             
         for valve_index, position in valve_config.items():
