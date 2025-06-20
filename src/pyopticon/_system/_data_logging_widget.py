@@ -18,6 +18,7 @@ class DataLoggingWidget():
         self.parent = parent_dashboard
         self.root = parent_dashboard.get_tkinter_object()
         self.main_color = '#FF7F7F'
+        self.nickname = "data_logger"
         # Widget for data logging
         self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         Label(self.frame,text="Data Logging Control").grid(row=1,column=1,sticky='nesw')
@@ -162,6 +163,22 @@ class DataLoggingWidget():
         self.destination.set(f) # Just the file name, not the whole path
         if os.path.isfile(self.filename):
             # File exists already
+            self.empty_file = False
+        else:
+            self.empty_file = True
+
+    def set_default_filename(self):
+        datestamp = datetime.datetime.now().strftime("%m-%d-%y")
+        timestamp = datetime.datetime.now().strftime('%H-%M')
+        full_timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        default_file_name = f"log_{full_timestamp}.csv"
+
+        self.filename = default_file_name
+
+        self.destination.set(default_file_name)
+        print(f"New logging destination set to: {self.filename}")
+
+        if os.path.isfile(self.filename):
             self.empty_file = False
         else:
             self.empty_file = True
