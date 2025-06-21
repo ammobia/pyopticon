@@ -137,6 +137,8 @@ class PyOpticonDashboard:
         self._logging_control_widget.get_frame().grid(row=i, column=0, padx=self.x_pad, pady=self.y_pad, in_=self.main_frame)
         i+=1
         self.register_observer(self._logging_control_widget)
+        
+        self.widgets_by_nickname["Data Logging Widget"] = self._logging_control_widget
 
         # System state management
         self.system_state = "Not Running"

@@ -73,7 +73,7 @@ class DataLoggingWidget():
 
             # Notifies observers when logging is stopped 
             # Need to have the filename as the last 'word' in the event argument
-            self.parent.notify('Stopped logging to file ' + self.filename, modifier = self)
+            self.parent.notify('Stopped logging to file ' + self.filename, notifier = self)
         else:
             # Check that the time interval and filename are valid
             if self.destination.get()=="None selected.":
@@ -161,6 +161,21 @@ class DataLoggingWidget():
         f = str.split(self.filename,'/')
         f = f[len(f)-1]
         self.destination.set(f) # Just the file name, not the whole path
+        if os.path.isfile(self.filename):
+            # File exists already
+            self.empty_file = False
+        else:
+            self.empty_file = True
+    
+    def set_default_filename(self):
+        datestamp = datetime.datetime.now().strftime("%m-%d-%y")
+        timestamp = datetime.datetime.now().strftime('%H-%M')
+        default_fn = datestamp+"_"+timestamp+"_logfile.csv"
+        
+        curent_working_directory = os.getcwd()
+        self.filename = os.path.join(curent_working_directory,default_fn)
+        self.destination.set(default_fn)
+        print(f"New logging destination set to: {self.filename}")
         if os.path.isfile(self.filename):
             # File exists already
             self.empty_file = False
