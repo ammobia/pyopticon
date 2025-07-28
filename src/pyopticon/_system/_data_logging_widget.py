@@ -30,6 +30,7 @@ class DataLoggingWidget():
         Label(self.frame, textvariable=self.destination).grid(row=2,column=2,sticky='nesw')
         self.choose_destination_button = Button(self.frame,text="(Select)", command=self._choose_destination)
         self.choose_destination_button.grid(row=2,column=3,sticky='nesw')
+        self.last_log_directory = os.getcwd()
         # Time interval
         Label(self.frame, text="Time interval: ").grid(row=3,column=1,sticky='nesw')
         self.time_interval = StringVar()
@@ -161,6 +162,7 @@ class DataLoggingWidget():
         f = str.split(self.filename,'/')
         f = f[len(f)-1]
         self.destination.set(f) # Just the file name, not the whole path
+        self.last_log_directory = os.path.dirname(self.filename)
         if os.path.isfile(self.filename):
             # File exists already
             self.empty_file = False
@@ -171,9 +173,9 @@ class DataLoggingWidget():
         datestamp = datetime.datetime.now().strftime("%m-%d-%y")
         timestamp = datetime.datetime.now().strftime('%H-%M')
         default_fn = datestamp+"_"+timestamp+"_logfile.csv"
-        
-        curent_working_directory = os.getcwd()
-        self.filename = os.path.join(curent_working_directory,default_fn)
+        target_directory = self.last_log_directory
+        os.makedirs(target_directory, exist_ok=True)
+        self.filename = os.path.join(target_directory,default_fn)
         self.destination.set(default_fn)
         print(f"New logging destination set to: {self.filename}")
         if os.path.isfile(self.filename):
@@ -182,21 +184,21 @@ class DataLoggingWidget():
         else:
             self.empty_file = True
 
-    def set_default_filename(self):
-        datestamp = datetime.datetime.now().strftime("%m-%d-%y")
-        timestamp = datetime.datetime.now().strftime('%H-%M')
-        full_timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        default_file_name = f"log_{full_timestamp}.csv"
+    # def set_default_filename(self):
+    #     datestamp = datetime.datetime.now().strftime("%m-%d-%y")
+    #     timestamp = datetime.datetime.now().strftime('%H-%M')
+    #     full_timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    #     default_file_name = f"log_{full_timestamp}.csv"
 
-        self.filename = default_file_name
+    #     self.filename = default_file_name
 
-        self.destination.set(default_file_name)
-        print(f"New logging destination set to: {self.filename}")
+    #     self.destination.set(default_file_name)
+    #     print(f"New logging destination set to: {self.filename}")
 
-        if os.path.isfile(self.filename):
-            self.empty_file = False
-        else:
-            self.empty_file = True
+    #     if os.path.isfile(self.filename):
+    #         self.empty_file = False
+    #     else:
+    #         self.empty_file = True
 
     def handle_notification(self, event, info=None):
         """Has an update function because this is listed as an observer of the dashboard."""
