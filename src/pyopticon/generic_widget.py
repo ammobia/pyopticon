@@ -69,7 +69,7 @@ class GenericWidget:
 
         # Create a frame, set its style
         self.color = color
-        self.frame = Frame(parent_dashboard.get_tkinter_object(), highlightbackground=self.color, highlightcolor=self.color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(), highlightbackground=self.color, highlightcolor=self.color, highlightthickness=5)
         self.parent_dashboard = parent_dashboard
         
         # Create the title

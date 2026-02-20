@@ -1,5 +1,5 @@
 # Import these for all dashboard objects
-from tkinter import Tk, font, Frame, Canvas
+from tkinter import Tk, font, Frame, Canvas, Scrollbar
 from tkinter import PhotoImage
 
 import sys
@@ -81,11 +81,34 @@ class PyOpticonDashboard:
         # Set up border configuration
         self.border_thickness = 20  # Thickness for caution stripes
         self.stripe_width = 20     # Width of each stripe in the pattern
-        
-        # Create main frame with padding for caution border
-        self.main_frame = Frame(root, padx=self.border_thickness, pady=self.border_thickness)
-        self.main_frame.grid(row=0, column=0, sticky='nsew')
-        # Configure grid to expand properly
+
+        # Create scrollable layout: Canvas + Scrollbars + inner Frame
+        self.scroll_canvas = Canvas(root, highlightthickness=0)
+        self.scroll_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.v_scrollbar = Scrollbar(root, orient='vertical', command=self.scroll_canvas.yview)
+        self.v_scrollbar.grid(row=0, column=1, sticky='ns')
+        self.h_scrollbar = Scrollbar(root, orient='horizontal', command=self.scroll_canvas.xview)
+        self.h_scrollbar.grid(row=1, column=0, sticky='ew')
+
+        self.scroll_canvas.configure(
+            yscrollcommand=self.v_scrollbar.set,
+            xscrollcommand=self.h_scrollbar.set
+        )
+
+        # Inner frame holds all widgets; it scrolls inside the canvas
+        self.inner_frame = Frame(self.scroll_canvas, padx=self.border_thickness, pady=self.border_thickness)
+        self.canvas_window = self.scroll_canvas.create_window((0, 0), window=self.inner_frame, anchor='nw')
+
+        # Update scroll region when inner frame resizes
+        self.inner_frame.bind('<Configure>', self._on_inner_frame_configure)
+        # Keep inner frame at least as wide as the canvas viewport
+        self.scroll_canvas.bind('<Configure>', self._on_canvas_configure)
+
+        # Backward-compat alias — existing code references self.main_frame
+        self.main_frame = self.inner_frame
+
+        # Configure root grid to expand properly
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
         
@@ -241,12 +264,22 @@ class PyOpticonDashboard:
                 print("Warning: adding a widget with a duplicate nickname '"+str(widget.nickname)+"'.")
             self.widgets_by_nickname[widget.nickname] = widget
 
-        # Center the window on the screen
+        # Size the window to fit content, capped at screen dimensions
         self.root.update_idletasks()
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        content_width = self.inner_frame.winfo_reqwidth()
+        content_height = self.inner_frame.winfo_reqheight()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        max_width = int(screen_width * 0.95)
+        max_height = int(screen_height * 0.90)
+
+        sb_w = self.v_scrollbar.winfo_reqwidth() if content_height > max_height else 0
+        sb_h = self.h_scrollbar.winfo_reqheight() if content_width > max_width else 0
+
+        width = min(content_width + sb_w, max_width)
+        height = min(content_height + sb_h, max_height)
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
         self.root.geometry(f'{width}x{height}+{x}+{y}')
 
     def add_interlock(self, fn):
@@ -358,7 +391,17 @@ class PyOpticonDashboard:
                 threading.Thread(target=widget._run_thread).start()
 
         # Preparations to launch the Tkinter mainloop
-        if not self.window_resizeable:
+        # Enable mousewheel scrolling
+        self._bind_mousewheel()
+        # If content overflows the screen, force the window to be resizable
+        # so the user can adjust the viewport even if window_resizeable=False
+        self.root.update_idletasks()
+        content_w = self.inner_frame.winfo_reqwidth()
+        content_h = self.inner_frame.winfo_reqheight()
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+        needs_scroll = content_w > int(screen_w * 0.95) or content_h > int(screen_h * 0.90)
+        if not self.window_resizeable and not needs_scroll:
             self.get_tkinter_object().after(100, lambda: self.get_tkinter_object().resizable(False,False))
         self._serial_control_widget._update_serial_ports()
         def on_close():
@@ -504,13 +547,24 @@ class PyOpticonDashboard:
         return self.widgets_by_nickname
     
     def get_tkinter_object(self):
-        """Get the dashboard's Tkinter frame object, through which Tkinter functions like after() can be accessed.
+        """Get the dashboard's Tkinter root object, through which Tkinter functions like after() can be accessed.
 
-        :return: The dashboard's Tkinter frame object.
+        :return: The dashboard's Tkinter root object.
         :rtype: tkinter.Tk
         """
         return self.root
-    
+
+    def get_widget_parent(self):
+        """Get the frame to which widget frames should be parented.
+
+        Widgets should create their frames as children of this object so that
+        they are placed inside the scrollable area of the dashboard.
+
+        :return: The inner scrollable frame.
+        :rtype: tkinter.Frame
+        """
+        return self.inner_frame
+
     def scale_all_text(self,scale_factor):
         """Go through all the widgets and scale the font on any tkinter Label, Text, OptionMenu, or Button objects. 
         Meant as a quick fix for using dashboards on smaller or larger screems.
@@ -564,6 +618,49 @@ class PyOpticonDashboard:
 
     def set_logging_interval(self, new_interval): # new_interval is a string
         self._logging_control_widget.time_interval.set(new_interval)
+
+    # ── Scroll helpers ──────────────────────────────────────────────
+
+    def _on_inner_frame_configure(self, event):
+        """Update the canvas scroll region to encompass the inner frame."""
+        self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox('all'))
+
+    def _on_canvas_configure(self, event):
+        """Ensure inner frame is at least as wide as the canvas viewport."""
+        self.scroll_canvas.itemconfig(self.canvas_window, width=event.width)
+
+    def _bind_mousewheel(self):
+        """Bind mouse wheel events for scrolling (activated on hover)."""
+        def _on_enter(event):
+            if platform.system() == 'Darwin':
+                self.scroll_canvas.bind_all('<MouseWheel>', self._on_mousewheel_y)
+                self.scroll_canvas.bind_all('<Shift-MouseWheel>', self._on_mousewheel_x)
+            else:
+                self.scroll_canvas.bind_all('<MouseWheel>', self._on_mousewheel_y)
+                self.scroll_canvas.bind_all('<Shift-MouseWheel>', self._on_mousewheel_x)
+
+        def _on_leave(event):
+            self.scroll_canvas.unbind_all('<MouseWheel>')
+            self.scroll_canvas.unbind_all('<Shift-MouseWheel>')
+
+        self.scroll_canvas.bind('<Enter>', _on_enter)
+        self.scroll_canvas.bind('<Leave>', _on_leave)
+
+    def _on_mousewheel_y(self, event):
+        """Handle vertical mouse wheel scrolling."""
+        if platform.system() == 'Darwin':
+            self.scroll_canvas.yview_scroll(-1 * event.delta, 'units')
+        else:
+            self.scroll_canvas.yview_scroll(-1 * (event.delta // 120), 'units')
+
+    def _on_mousewheel_x(self, event):
+        """Handle horizontal mouse wheel scrolling (Shift + scroll)."""
+        if platform.system() == 'Darwin':
+            self.scroll_canvas.xview_scroll(-1 * event.delta, 'units')
+        else:
+            self.scroll_canvas.xview_scroll(-1 * (event.delta // 120), 'units')
+
+    # ── Caution banner ───────────────────────────────────────────
 
     def update_caution_banner(self):
         """Update the caution banner based on the current system state."""

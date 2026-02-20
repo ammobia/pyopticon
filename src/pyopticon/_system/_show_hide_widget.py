@@ -19,7 +19,7 @@ class ShowHideWidget:
         self.root = parent_dashboard.get_tkinter_object()
         self.main_color = '#FF7F7F'
         # Widget for showing and hiding terminal and serial interfaces
-        self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(),highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         Label(self.frame,text="Show and Hide Widgets").grid(row=1,column=1)
         # Button to show or hide console
         self.console_shown_text = StringVar()

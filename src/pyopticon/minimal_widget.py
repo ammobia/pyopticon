@@ -14,7 +14,7 @@ class MinimalWidget:
 
     def __init__(self,parent_dashboard):
         """ Constructor for a minimal widget."""
-        self.frame = Frame(parent_dashboard.get_tkinter_object())
+        self.frame = Frame(parent_dashboard.get_widget_parent())
         self.queue = queue.Queue()
         self.parent_dashboard = parent_dashboard
         self.doing_update=False

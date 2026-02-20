@@ -6,7 +6,7 @@ class StatusWidget:
     def __init__(self, parent_dashboard):
         self.parent_dashboard = parent_dashboard
         self.main_color = '#FF7F7F'
-        self.frame = Frame(parent_dashboard.get_tkinter_object(), highlightbackground = self.main_color, highlightcolor = self.main_color, highlightthickness = 5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(), highlightbackground = self.main_color, highlightcolor = self.main_color, highlightthickness = 5)
         self.label = Label(self.frame, text="System State: Not Running")
         self.label.pack()
         self.maintenance_button = Button(self.frame, text="Enter Maintenance Mode", command=self.toggle_maintenance_mode)

@@ -20,7 +20,7 @@ class DataLoggingWidget():
         self.main_color = '#FF7F7F'
         self.nickname = "data_logger"
         # Widget for data logging
-        self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(),highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         Label(self.frame,text="Data Logging Control").grid(row=1,column=1,sticky='nesw')
         # Select destination
         self.filename='None'

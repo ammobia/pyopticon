@@ -31,7 +31,7 @@ class AutomationWidget(minimal_widget.MinimalWidget):
         self.root = parent_dashboard.get_tkinter_object()
         self.main_color = '#FF7F7F'
         # Lay out all the tkinter elements
-        self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(),highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         Label(self.frame,text="Automation Control ").grid(row=1,column=1,sticky='nesw')
         self.automation_running_label = StringVar()
         Label(self.frame,textvariable=self.automation_running_label).grid(row=1,column=2,sticky='nesw')

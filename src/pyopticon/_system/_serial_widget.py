@@ -23,7 +23,7 @@ class SerialWidget:
         self.serial_polling_wait = polling_interval # Poll serial ports every X milliseconds
         self.main_color = '#FF7F7F'
         # Widget for all serial connections
-        self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(),highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         self.control_label = Label(self.frame,text="Control Serial Communication")
         self.control_label.grid(row=1,column=1,sticky='nesw')
         # Open/close serial communication logic

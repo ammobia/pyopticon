@@ -27,7 +27,7 @@ class SocketWidget:
         self.main_color = '#FF7F7F'
         self.port_numbers = port_numbers
         # Widget for all serial connections
-        self.frame = Frame(self.root,highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
+        self.frame = Frame(parent_dashboard.get_widget_parent(),highlightbackground=self.main_color, highlightcolor=self.main_color, highlightthickness=5)
         self.status_text = StringVar()
         self.sockets_connected = 0
         self.status_text.set("Sockets connected: 0")
